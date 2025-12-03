@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini 챗봇</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        #apiKeyInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #apiKeyInput:focus {
+            border-color: #667eea;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #userInput:focus {
+            border-color: #667eea;
+        }
+
+        #sendButton {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        #sendButton:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #sendButton:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 20px;
+            border-left: 4px solid #c33;
+        }
+
+        .api-key-section {
+            padding: 15px 20px;
+            background: #fff3cd;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .api-key-section label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #856404;
+            font-size: 0.9rem;
+        }
+
+        .api-key-section input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Google Gemini 챗봇</h1>
+            <p>Gemini 2.5 Flash 모델을 사용하는 AI 챗봇</p>
+        </div>
+        
+        <div class="api-key-section">
+            <label for="apiKeyInput">Google API Key:</label>
+            <input type="password" id="apiKeyInput" placeholder="여기에 Google API Key를 입력하세요">
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="message assistant">
+                <div class="message-content">
+                    안녕하세요! 👋 Google Gemini 챗봇입니다. API Key를 입력한 후 메시지를 보내주세요.
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="메시지를 입력하세요..." onkeypress="handleKeyPress(event)">
+            <button id="sendButton" onclick="sendMessage()">전송</button>
+        </div>
+    </div>
+
+    <script>
+        let messages = [];
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const sendButton = document.getElementById('sendButton');
+            const chatContainer = document.getElementById('chatContainer');
+
+            const message = userInput.value.trim();
+            const apiKey = apiKeyInput.value.trim();
+
+            if (!message) return;
+
+            if (!apiKey) {
+                showError('API Key를 입력해주세요!');
+                return;
+            }
+
+            // 사용자 메시지 표시
+            addMessage('user', message);
+            userInput.value = '';
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<div class="loading"></div>';
+
+            // 로딩 메시지 표시
+            const loadingId = addMessage('assistant', '응답을 생성하는 중...');
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+                // 대화 기록 준비 (최근 10개만)
+                const contents = [];
+                const recentMessages = messages.slice(-10);
+                
+                for (const msg of recentMessages) {
+                    if (msg.role === 'user') {
+                        contents.push({
+                            role: 'user',
+                            parts: [{ text: msg.content }]
+                        });
+                    } else if (msg.role === 'assistant') {
+                        contents.push({
+                            role: 'model',
+                            parts: [{ text: msg.content }]
+                        });
+                    }
+                }
+
+                // 현재 메시지 추가
+                contents.push({
+                    role: 'user',
+                    parts: [{ text: message }]
+                });
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: contents
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // 로딩 메시지 제거
+                removeMessage(loadingId);
+
+                if (data.candidates && data.candidates.length > 0) {
+                    const assistantResponse = data.candidates[0].content.parts[0].text;
+                    addMessage('assistant', assistantResponse);
+                    messages.push({ role: 'assistant', content: assistantResponse });
+                } else {
+                    throw new Error('응답을 받을 수 없습니다.');
+                }
+
+            } catch (error) {
+                removeMessage(loadingId);
+                showError(`오류: ${error.message}`);
+                console.error('Error:', error);
+            } finally {
+                sendButton.disabled = false;
+                sendButton.innerHTML = '전송';
+            }
+
+            // 사용자 메시지 저장
+            messages.push({ role: 'user', content: message });
+        }
+
+        function addMessage(role, content) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageId = 'msg-' + Date.now() + '-' + Math.random();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.id = messageId;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+            
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+            
+            // 스크롤을 맨 아래로
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            return messageId;
+        }
+
+        function removeMessage(messageId) {
+            const message = document.getElementById(messageId);
+            if (message) {
+                message.remove();
+            }
+        }
+
+        function showError(message) {
+            const chatContainer = document.getElementById('chatContainer');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            chatContainer.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
+
