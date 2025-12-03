@@ -20,11 +20,50 @@ st.markdown("---")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# API 키 확인
-api_key = os.getenv("GOOGLE_API_KEY")
+# 사이드바에 API 키 입력 필드 추가
+with st.sidebar:
+    st.header("⚙️ 설정")
+    
+    # .env에서 기본값 로드
+    default_api_key = os.getenv("GOOGLE_API_KEY", "")
+    if default_api_key == "your_google_api_key_here":
+        default_api_key = ""
+    
+    # API 키 입력
+    api_key = st.text_input(
+        "Google API Key",
+        value=default_api_key,
+        type="password",
+        help="Google Gemini API 키를 입력하세요. .env 파일에 설정되어 있으면 자동으로 로드됩니다.",
+        placeholder="API 키를 입력하세요..."
+    )
+    
+    st.markdown("---")
+    
+    st.header("ℹ️ 정보")
+    st.markdown("""
+    **Google Gemini 2.5 Flash** 모델을 사용하는 챗봇입니다.
+    
+    ### 사용 방법
+    1. 위에 API Key를 입력하세요
+    2. 아래 입력창에 메시지를 입력하세요
+    3. Enter를 누르거나 전송 버튼을 클릭하세요
+    4. AI의 응답을 확인하세요
+    
+    ### 기능
+    - 대화 기록 유지
+    - 실시간 응답 생성
+    - 모던한 UI
+    """)
+    
+    if st.button("🗑️ 대화 기록 지우기"):
+        st.session_state.messages = []
+        st.rerun()
 
-if not api_key or api_key == "your_google_api_key_here":
-    st.error("⚠️ .env 파일에 GOOGLE_API_KEY를 설정해주세요!")
+# API 키 확인
+if not api_key or api_key.strip() == "":
+    st.warning("⚠️ 사이드바에서 Google API Key를 입력해주세요!")
+    st.info("💡 API Key는 Google Cloud Console에서 발급받을 수 있습니다.")
     st.stop()
 
 # 채팅 기록 표시
@@ -83,25 +122,4 @@ if prompt := st.chat_input("메시지를 입력하세요..."):
                 st.error(f"API 요청 중 오류가 발생했습니다: {str(e)}")
             except Exception as e:
                 st.error(f"오류가 발생했습니다: {str(e)}")
-
-# 사이드바에 정보 표시
-with st.sidebar:
-    st.header("ℹ️ 정보")
-    st.markdown("""
-    **Google Gemini 2.5 Flash** 모델을 사용하는 챗봇입니다.
-    
-    ### 사용 방법
-    1. 아래 입력창에 메시지를 입력하세요
-    2. Enter를 누르거나 전송 버튼을 클릭하세요
-    3. AI의 응답을 확인하세요
-    
-    ### 기능
-    - 대화 기록 유지
-    - 실시간 응답 생성
-    - 모던한 UI
-    """)
-    
-    if st.button("🗑️ 대화 기록 지우기"):
-        st.session_state.messages = []
-        st.rerun()
 
