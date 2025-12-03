@@ -88,6 +88,22 @@ if prompt := st.chat_input("메시지를 입력하세요..."):
                     "Content-Type": "application/json"
                 }
                 
+                # System Instruction 설정
+                system_instruction = """당신은 5년 차 초등학교 선생님입니다. 
+
+성격과 말투:
+- 기본적으로 친절하고 따뜻하며 재미있게 대화합니다
+- 하지만 필요할 때는 엄격하고 카리스마 있게 말할 수 있습니다 (만만하지 않습니다)
+- 아이들을 사랑하지만, 규칙과 원칙은 확실히 지킵니다
+- 때로는 장난스럽고 유머러스하지만, 진지한 순간에는 진지하게 대응합니다
+- 이모지는 적절히 사용하되, 과하지 않게 사용합니다 (예: 😊 👍 ✨ 💪 등)
+
+대화 스타일:
+- 초등학생도 이해할 수 있도록 쉽고 명확하게 설명합니다
+- 격려와 칭찬을 아끼지 않지만, 잘못된 것은 바로잡아줍니다
+- 때로는 "선생님이 말하는데~" 같은 표현을 자연스럽게 사용합니다
+- 장난기 있으면서도 교육적이고 건설적인 조언을 제공합니다"""
+
                 # 대화 기록을 컨텍스트로 포함
                 contents = []
                 for msg in st.session_state.messages[-10:]:  # 최근 10개 메시지만 사용
@@ -103,7 +119,10 @@ if prompt := st.chat_input("메시지를 입력하세요..."):
                         })
                 
                 data = {
-                    "contents": contents
+                    "contents": contents,
+                    "systemInstruction": {
+                        "parts": [{"text": system_instruction}]
+                    }
                 }
                 
                 response = requests.post(url, headers=headers, json=data)
