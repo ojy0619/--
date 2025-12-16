@@ -139,7 +139,6 @@ system_prompt = f"""
 
 st.title("👩‍🏫 창업 아이디어 멘토링")
 st.write(f"### 주제: **{category}** 프로젝트")
-st.caption("선생님께 여러분의 아이디어를 설명해보세요. 논리적이지 않으면 통과할 수 없습니다.")
 st.markdown("---")
 
 # -------------------------------------------------------------------
@@ -147,6 +146,8 @@ st.markdown("---")
 # -------------------------------------------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": system_prompt}]
+    st.session_state.idea_selected = False
+    st.session_state.custom_idea = ""
 
 # 대화 기록 시각화
 for message in st.session_state.messages:
@@ -157,31 +158,111 @@ for message in st.session_state.messages:
             st.markdown(message["content"])
 
 # -------------------------------------------------------------------
+# [교육적 빌드업] 시작 화면 - 아이디어 선택
+# -------------------------------------------------------------------
+if not st.session_state.idea_selected and len([m for m in st.session_state.messages if m["role"] != "system"]) == 0:
+    st.markdown("""
+    <div style='background-color: #E8EAF6; padding: 25px; border-radius: 15px; margin: 20px 0; border-left: 5px solid #3949AB;'>
+        <h3 style='color: #1A237E; margin-bottom: 15px;'>안녕하세요! 선생님입니다.</h3>
+        <p style='color: #1A237E; font-size: 1.1em; line-height: 1.8;'>
+            오늘은 여러분이 직접 생각해낸 아이디어를 현실적인 창업 아이디어로 발전시켜보는 시간입니다.
+            <br><br>
+            <strong>어떤 물건이나 아이디어를 생각해 내서 팔아보고 싶어요?</strong>
+            <br><br>
+            아래에서 가장 관심 있는 분야를 선택해주세요. 선택한 내용을 바탕으로 선생님이 여러분의 아이디어를 함께 발전시켜드릴게요.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("### 💡 아이디어 선택하기")
+    
+    # 아이디어 선택지
+    idea_options = [
+        "🎨 만들기/공예 관련 (예: 손수건, 열쇠고리, 스티커 등)",
+        "🍪 음식/간식 관련 (예: 쿠키, 젤리, 음료 등)",
+        "📚 학습 도구/문구 관련 (예: 노트, 필기구, 스티커북 등)",
+        "🎮 게임/놀이 관련 (예: 보드게임, 퍼즐, 장난감 등)",
+        "🌱 환경/생활 개선 관련 (예: 재활용품, 생활용품 등)",
+        "💻 디지털/기술 관련 (예: 앱, 웹사이트, 프로그램 등)",
+        "기타 (직접 입력)"
+    ]
+    
+    selected_option = st.radio(
+        "아이디어 유형을 선택하세요:",
+        idea_options,
+        key="idea_selection"
+    )
+    
+    # 기타 선택 시 직접 입력 받기
+    if selected_option == "기타 (직접 입력)":
+        custom_input = st.text_input(
+            "어떤 종류의 아이디어를 원하시나요?",
+            placeholder="예: 운동용품, 반려동물 용품, 패션 아이템 등",
+            key="custom_idea_input"
+        )
+        
+        if st.button("선택 완료", type="primary", use_container_width=True, disabled=not custom_input):
+            if custom_input:
+                user_input = f"저는 {custom_input} 관련 아이디어를 생각해보고 싶어요."
+                st.session_state.idea_selected = True
+                st.session_state.messages.append({"role": "user", "content": user_input})
+                
+                # 즉시 AI 응답 생성
+                with st.spinner("선생님이 아이디어를 검토하고 있습니다..."):
+                    time.sleep(1.2)
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=st.session_state.messages
+                    )
+                    ai_reply = response.choices[0].message.content
+                    st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+                st.rerun()
+    else:
+        if st.button("선택 완료", type="primary", use_container_width=True):
+            # 선택지에서 이모지와 설명 제거하고 핵심 키워드만 추출
+            clean_option = selected_option.split("(")[0].strip()
+            user_input = f"저는 {clean_option} 관련 아이디어를 생각해보고 싶어요."
+            st.session_state.idea_selected = True
+            st.session_state.messages.append({"role": "user", "content": user_input})
+            
+            # 즉시 AI 응답 생성
+            with st.spinner("선생님이 아이디어를 검토하고 있습니다..."):
+                time.sleep(1.2)
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=st.session_state.messages
+                )
+                ai_reply = response.choices[0].message.content
+                st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+            st.rerun()
+
+# -------------------------------------------------------------------
 # [TPACK - TK] 실시간 상호작용
 # -------------------------------------------------------------------
-if user_input := st.chat_input("아이디어를 구체적으로 입력하세요 (예: 칠판 지우개 청소 로봇)"):
+if st.session_state.idea_selected:
+    if user_input := st.chat_input("아이디어를 구체적으로 설명해주세요 (예: 칠판 지우개 청소 로봇)"):
+        
+        # 1. 학생 입력 표시
+        st.chat_message("user", avatar="🧒").markdown(user_input)
+        st.session_state.messages.append({"role": "user", "content": user_input})
 
-    # 1. 학생 입력 표시
-    st.chat_message("user", avatar="🧒").markdown(user_input)
-    st.session_state.messages.append({"role": "user", "content": user_input})
+        # 2. AI 생각 효과 (진지한 검토 느낌)
+        with st.spinner("선생님이 아이디어를 검토하고 있습니다..."):
+            time.sleep(1.2) 
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=st.session_state.messages
+            )
+            ai_reply = response.choices[0].message.content
 
-    # 2. AI 생각 효과 (진지한 검토 느낌)
-    with st.spinner("선생님이 아이디어를 검토하고 있습니다..."):
-        time.sleep(1.2) 
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=st.session_state.messages
-        )
-        ai_reply = response.choices[0].message.content
+        # 3. AI 답변 표시
+        st.chat_message("assistant", avatar="👩‍🏫").markdown(ai_reply)
+        st.session_state.messages.append({"role": "assistant", "content": ai_reply})
 
-    # 3. AI 답변 표시
-    st.chat_message("assistant", avatar="👩‍🏫").markdown(ai_reply)
-    st.session_state.messages.append({"role": "assistant", "content": ai_reply})
-
-    # 4. [보상 시스템] 성취감 부여
-    # 선생님의 칭찬 키워드가 있을 때만 축하 효과
-    positive_keywords = ["훌륭합니다", "정확합니다", "통과", "잘했습니다", "탁월합니다"]
-    if any(keyword in ai_reply for keyword in positive_keywords):
-        st.balloons()
-        st.success("🎉 통과! 아주 논리적인 수정이었습니다. 상담 일지를 저장하세요.")
+            # 4. [보상 시스템] 성취감 부여
+        # 선생님의 칭찬 키워드가 있을 때만 축하 효과
+        positive_keywords = ["훌륭합니다", "정확합니다", "통과", "잘했습니다", "탁월합니다"]
+        if any(keyword in ai_reply for keyword in positive_keywords):
+            st.balloons()
+            st.success("🎉 통과! 아주 논리적인 수정이었습니다. 상담 일지를 저장하세요.")
 
