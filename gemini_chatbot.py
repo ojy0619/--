@@ -254,18 +254,23 @@ if "messages" not in st.session_state:
     st.session_state.idea_selected = False
     st.session_state.custom_idea = ""
 
-# 대화 기록 시각화
-for message in st.session_state.messages:
-    if message["role"] != "system":
-        # 아바타 변경: 고양이 -> 선생님/학생
-        avatar = "👩‍🏫" if message["role"] == "assistant" else "🧒"
-        with st.chat_message(message["role"], avatar=avatar):
-            st.markdown(message["content"])
+# idea_selected가 없으면 초기화
+if "idea_selected" not in st.session_state:
+    st.session_state.idea_selected = False
+
+# 대화 기록 시각화 (선택지 화면이 아닐 때만)
+if st.session_state.idea_selected:
+    for message in st.session_state.messages:
+        if message["role"] != "system":
+            # 아바타 변경: 고양이 -> 선생님/학생
+            avatar = "👩‍🏫" if message["role"] == "assistant" else "🧒"
+            with st.chat_message(message["role"], avatar=avatar):
+                st.markdown(message["content"])
 
 # -------------------------------------------------------------------
 # [교육적 빌드업] 시작 화면 - 아이디어 선택
 # -------------------------------------------------------------------
-if not st.session_state.idea_selected and len([m for m in st.session_state.messages if m["role"] != "system"]) == 0:
+if not st.session_state.idea_selected:
     st.markdown("""
     <div style='background-color: #E8EAF6; padding: 25px; border-radius: 15px; margin: 20px 0; border-left: 5px solid #3949AB;'>
         <h3 style='color: #1A237E; margin-bottom: 15px;'>안녕하세요! 선생님입니다.</h3>
@@ -306,6 +311,118 @@ if not st.session_state.idea_selected and len([m for m in st.session_state.messa
         idea_options,
         key="idea_selection"
     )
+    
+    # 예시 발명품 안내 섹션
+    st.markdown("---")
+    with st.expander("💡 창업(발명품)에 어려움을 느끼는 학생이 있나요? 선생님이 생각해 낸 아이디어를 참고해 보세요!", expanded=False):
+        st.markdown("### 📋 선생님의 예시 발명품들")
+        
+        # 예시 1: 환경 개선 관련
+        st.markdown("""
+        #### 🌱 예시 1: 친환경 재사용 물병 스티커 키트
+        
+        **해결하려는 문제:**
+        - 일회용 플라스틱 병 사용이 많아 환경 오염이 심각해요.
+        - 학생들이 물병을 자주 잃어버려서 새로 사야 하는 상황이 반복돼요.
+        
+        **고려한 부분:**
+        - 사용자: 초등학생들이 쉽게 사용할 수 있어야 함
+        - 장소: 학교, 학원 등에서 휴대하기 편해야 함
+        - 재료: 친환경 재료 사용 (재활용 종이, 식물성 접착제)
+        - 시간: 5분 이내로 스티커를 붙일 수 있어야 함
+        
+        **중점으로 생각한 것:**
+        - 환경 보호 의식 함양 (재사용 습관 만들기)
+        - 개성 표현 (나만의 디자인)
+        - 경제적 이점 (물병을 오래 사용)
+        
+        **주의점:**
+        - 스티커가 물에 젖어도 떨어지지 않아야 함
+        - 아이들이 안전하게 사용할 수 있는 재료여야 함
+        - 너무 비싸지 않아야 함 (학생들이 부담 없이 구매 가능)
+        
+        **가격:**
+        - 세트당 3,000원~5,000원 (스티커 10장 + 안내 책자 포함)
+        
+        **교육적 이점:**
+        - 환경 감수성 향상
+        - 책임감 배양 (물건을 소중히 다루는 습관)
+        - 창의성 발휘 (나만의 디자인 만들기)
+        """)
+        
+        st.markdown("---")
+        
+        # 예시 2: 학습 도구 관련
+        st.markdown("""
+        #### 📚 예시 2: 시간 관리 스마트 노트
+        
+        **해결하려는 문제:**
+        - 숙제나 공부 계획을 세워도 자꾸 미루게 돼요.
+        - 시간을 어떻게 쓰는지 스스로 파악하기 어려워요.
+        
+        **고려한 부분:**
+        - 사용자: 초등학생이 스스로 체크할 수 있어야 함
+        - 장소: 집, 학교 어디서나 사용 가능
+        - 재료: 일반 노트보다 조금 두꺼운 종이, 색연필/스티커 포함
+        - 시간: 하루 5분씩 체크하는 습관 형성
+        
+        **중점으로 생각한 것:**
+        - 자기주도 학습 능력 향상
+        - 시간 관리 습관 형성
+        - 성취감 부여 (체크리스트 완성)
+        
+        **주의점:**
+        - 너무 복잡하지 않아야 함 (아이들이 지루해하지 않도록)
+        - 부모님의 지나친 간섭 없이 스스로 할 수 있어야 함
+        - 가격이 너무 비싸면 학생들이 부담스러워함
+        
+        **가격:**
+        - 노트 1권당 4,000원~6,000원 (체크 스티커 30장 포함)
+        
+        **교육적 이점:**
+        - 자기주도 학습 능력 향상
+        - 시간 관리 능력 배양
+        - 목표 설정 및 달성 경험
+        - 책임감 향상
+        """)
+        
+        st.markdown("---")
+        
+        # 예시 3: 건강/안전 관련
+        st.markdown("""
+        #### 🩺 예시 3: 응급 상황 대처 가이드 스티커북
+        
+        **해결하려는 문제:**
+        - 응급 상황에서 어떻게 해야 할지 몰라 당황해요.
+        - 119에 전화할 때 뭐라고 말해야 할지 기억이 안 나요.
+        
+        **고려한 부분:**
+        - 사용자: 초등학생이 쉽게 이해할 수 있어야 함
+        - 장소: 집, 학교, 놀이터 등 어디서나 참고 가능
+        - 재료: 방수 스티커, 그림이 많은 가이드북
+        - 시간: 5분 안에 읽고 이해할 수 있어야 함
+        
+        **중점으로 생각한 것:**
+        - 안전 의식 향상
+        - 응급 상황 대처 능력
+        - 생명을 소중히 여기는 마음
+        
+        **주의점:**
+        - 너무 무서운 내용이면 아이들이 두려워할 수 있음
+        - 실제로 도움이 되는 정확한 정보여야 함
+        - 부모님과 함께 읽을 수 있는 구성
+        
+        **가격:**
+        - 스티커북 1권당 5,000원~7,000원 (가이드북 + 응급 전화 스티커 포함)
+        
+        **교육적 이점:**
+        - 안전 의식 향상
+        - 문제 해결 능력 향상
+        - 책임감 배양
+        - 생명 존중 의식 함양
+        """)
+        
+        st.info("💡 위 예시들을 참고해서, 여러분만의 창의적인 아이디어를 생각해보세요!")
     
     # 기타 선택 시 직접 입력 받기
     if selected_option == "기타 (직접 입력)":
