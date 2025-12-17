@@ -72,7 +72,10 @@ st.markdown("""
     }
 
     /* 채팅 말풍선 느낌 (기본 텍스트 대비 강화용) */
-    .stChatMessage p {
+    .stChatMessage p,
+    .stChatMessage div,
+    .stChatMessage span,
+    .stChatMessage * {
         color: #000000 !important;
     }
     
@@ -109,6 +112,16 @@ else:
         )
 
     if api_key_input:
+        # API 키가 변경되었는지 확인
+        if "previous_api_key" not in st.session_state:
+            st.session_state.previous_api_key = api_key_input
+        elif st.session_state.previous_api_key != api_key_input:
+            # API 키가 변경되었으면 세션 상태 초기화
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.session_state.previous_api_key = api_key_input
+            st.rerun()
+        
         gemini_api_key = api_key_input
     else:
         st.error("🚨 선생님이 칠판을 준비하지 못했어요. (Gemini API 키를 설정해주세요)")
