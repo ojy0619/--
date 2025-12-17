@@ -125,6 +125,15 @@ with st.sidebar:
     
     st.divider()
     
+    # 대화 초기화 버튼
+    if st.button("🔄 처음부터 다시 시작하기", use_container_width=True):
+        st.session_state.messages = [{"role": "system", "content": system_prompt}]
+        st.session_state.idea_selected = False
+        st.session_state.custom_idea = ""
+        st.rerun()
+    
+    st.divider()
+    
     # [과정 중심 평가] 포트폴리오 저장
     if st.button("📝 상담 일지 저장하기"):
         chat_log = ""
@@ -247,19 +256,26 @@ st.write(f"### 주제: **{category}** 프로젝트")
 st.markdown("---")
 
 # -------------------------------------------------------------------
-# 채팅 인터페이스
+# 채팅 인터페이스 초기화
 # -------------------------------------------------------------------
+# 세션 상태 초기화 (처음 실행 시)
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": system_prompt}]
     st.session_state.idea_selected = False
     st.session_state.custom_idea = ""
 
-# idea_selected가 없으면 초기화
+# idea_selected가 없거나 초기화가 필요한 경우
 if "idea_selected" not in st.session_state:
     st.session_state.idea_selected = False
 
+# -------------------------------------------------------------------
+# [교육적 빌드업] 시작 화면 - 아이디어 선택
+# -------------------------------------------------------------------
+# 선택지 화면 표시 여부 결정
+show_selection = not st.session_state.idea_selected
+
 # 대화 기록 시각화 (선택지 화면이 아닐 때만)
-if st.session_state.idea_selected:
+if not show_selection:
     for message in st.session_state.messages:
         if message["role"] != "system":
             # 아바타 변경: 고양이 -> 선생님/학생
@@ -270,7 +286,7 @@ if st.session_state.idea_selected:
 # -------------------------------------------------------------------
 # [교육적 빌드업] 시작 화면 - 아이디어 선택
 # -------------------------------------------------------------------
-if not st.session_state.idea_selected:
+if show_selection:
     st.markdown("""
     <div style='background-color: #E8EAF6; padding: 25px; border-radius: 15px; margin: 20px 0; border-left: 5px solid #3949AB;'>
         <h3 style='color: #1A237E; margin-bottom: 15px;'>안녕하세요! 선생님입니다.</h3>
