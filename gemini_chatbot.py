@@ -26,7 +26,7 @@ st.markdown("""
     
     html, body, [class*="css"] {
         font-family: 'Noto Sans KR', sans-serif;
-        color: #333333;
+        color: #000000;
     }
     
     .stApp {
@@ -34,7 +34,7 @@ st.markdown("""
     }
 
     h1, h2, h3, h4, h5, h6, p, span, label {
-        color: #333333 !important;
+        color: #000000 !important;
     }
 
     /* 메인 영역 카드 느낌 */
@@ -48,7 +48,7 @@ st.markdown("""
     /* 버튼: 파스텔 톤 */
     .stButton>button {
         background: linear-gradient(135deg, #FFB6C1, #FFCC80);
-        color: #4A148C;
+        color: #000000;
         border-radius: 999px;
         font-weight: 700;
         border: none;
@@ -62,7 +62,7 @@ st.markdown("""
     /* 정보 박스 */
     .stInfo {
         background-color: #FFF3E0;
-        color: #5D4037;
+        color: #000000;
         border-radius: 12px;
     }
 
@@ -73,7 +73,7 @@ st.markdown("""
 
     /* 채팅 말풍선 느낌 (기본 텍스트 대비 강화용) */
     .stChatMessage p {
-        color: #333333 !important;
+        color: #000000 !important;
     }
     
     /* Expander 내부 텍스트 색상 (검정색) */
@@ -82,7 +82,7 @@ st.markdown("""
     [data-testid="stExpander"] h4,
     [data-testid="stExpander"] li,
     [data-testid="stExpander"] strong {
-        color: #333333 !important;
+        color: #000000 !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -336,8 +336,8 @@ if st.session_state.idea_selected:
 if not st.session_state.idea_selected:
     st.markdown("""
     <div style='background-color: #E8EAF6; padding: 25px; border-radius: 15px; margin: 20px 0; border-left: 5px solid #3949AB;'>
-        <h3 style='color: #1A237E; margin-bottom: 15px;'>안녕하세요! 선생님입니다.</h3>
-        <p style='color: #1A237E; font-size: 1.1em; line-height: 1.8;'>
+        <h3 style='color: #000000; margin-bottom: 15px;'>안녕하세요! 선생님입니다.</h3>
+        <p style='color: #000000; font-size: 1.1em; line-height: 1.8;'>
             오늘은 여러분이 직접 생각해낸 아이디어를 현실적인 창업 아이디어로 발전시켜보는 시간입니다.
             <br><br>
             <strong>어떤 물건이나 아이디어를 생각해 내서 팔아보고 싶어요?</strong>
