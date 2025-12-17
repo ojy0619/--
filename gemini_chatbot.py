@@ -280,22 +280,8 @@ if "idea_selected" not in st.session_state:
 # -------------------------------------------------------------------
 # [교육적 빌드업] 시작 화면 - 아이디어 선택
 # -------------------------------------------------------------------
-# 선택지 화면 표시 여부 결정
-show_selection = not st.session_state.idea_selected
-
-# 대화 기록 시각화 (선택지 화면이 아닐 때만)
-if not show_selection:
-    for message in st.session_state.messages:
-        if message["role"] != "system":
-            # 아바타 변경: 고양이 -> 선생님/학생
-            avatar = "👩‍🏫" if message["role"] == "assistant" else "🧒"
-            with st.chat_message(message["role"], avatar=avatar):
-                st.markdown(message["content"])
-
-# -------------------------------------------------------------------
-# [교육적 빌드업] 시작 화면 - 아이디어 선택
-# -------------------------------------------------------------------
-if show_selection:
+# 선택지가 아직 선택되지 않았으면 선택지 화면 표시
+if not st.session_state.idea_selected:
     st.markdown("""
     <div style='background-color: #E8EAF6; padding: 25px; border-radius: 15px; margin: 20px 0; border-left: 5px solid #3949AB;'>
         <h3 style='color: #1A237E; margin-bottom: 15px;'>안녕하세요! 선생님입니다.</h3>
@@ -485,12 +471,20 @@ if show_selection:
             with st.spinner("선생님이 아이디어를 검토하고 있습니다..."):
                 time.sleep(1.2)
                 try:
-                    ai_reply = call_gemini(st.session_state.messages)
+                    ai_reply = call_gemini(st.session_state.messages, category)
                     st.session_state.messages.append({"role": "assistant", "content": ai_reply})
                 except RuntimeError as e:
                     st.error(str(e))
                     st.stop()
-            st.rerun()
+                st.rerun()
+else:
+    # 선택지가 선택된 후 - 대화 기록 표시
+    for message in st.session_state.messages:
+        if message["role"] != "system":
+            # 아바타 변경: 고양이 -> 선생님/학생
+            avatar = "👩‍🏫" if message["role"] == "assistant" else "🧒"
+            with st.chat_message(message["role"], avatar=avatar):
+                st.markdown(message["content"])
 
 # -------------------------------------------------------------------
 # [TPACK - TK] 실시간 상호작용
