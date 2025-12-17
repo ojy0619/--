@@ -116,9 +116,8 @@ else:
         if "previous_api_key" not in st.session_state:
             st.session_state.previous_api_key = api_key_input
         elif st.session_state.previous_api_key != api_key_input:
-            # API 키가 변경되었으면 세션 상태 초기화
-            for key in list(st.session_state.keys()):
-                del st.session_state[key]
+            # API 키가 변경되었으면 세션 상태 완전 초기화
+            st.session_state.clear()
             st.session_state.previous_api_key = api_key_input
             st.rerun()
         
