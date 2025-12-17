@@ -329,14 +329,10 @@ if st.session_state.idea_selected:
     if len(user_messages) == 0:
         st.session_state.idea_selected = False
 
-# 강제 초기화: messages에 system만 있거나, idea_selected가 명시적으로 True로 설정되지 않았으면 False
+# 강제 초기화: messages에 system만 있으면 idea_selected를 False로
 if "messages" in st.session_state:
     non_system_messages = [m for m in st.session_state.messages if m.get("role") != "system"]
     if len(non_system_messages) == 0:
-        st.session_state.idea_selected = False
-    # 이전 세션의 메시지가 남아있어도 선택지 화면을 먼저 보여주기 위해
-    # idea_selected가 명시적으로 True가 아니면 False로 강제 설정
-    if not st.session_state.get("idea_selected", False):
         st.session_state.idea_selected = False
 
 st.title("👩‍🏫 창업 아이디어 멘토링")
@@ -347,6 +343,11 @@ st.markdown("---")
 # [교육적 빌드업] 시작 화면 - 아이디어 선택
 # -------------------------------------------------------------------
 # 선택지가 아직 선택되지 않았으면 선택지 화면 표시
+# system 메시지만 있으면 무조건 선택지 화면 표시
+if "messages" in st.session_state:
+    if len([m for m in st.session_state.messages if m.get("role") != "system"]) == 0:
+        st.session_state.idea_selected = False
+
 if not st.session_state.idea_selected:
     st.markdown("""
     <div style='background-color: #E8EAF6; padding: 25px; border-radius: 15px; margin: 20px 0; border-left: 5px solid #3949AB;'>
