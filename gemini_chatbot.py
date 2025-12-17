@@ -1,5 +1,5 @@
 import streamlit as st
-from openai import OpenAI
+import requests
 import time
 import datetime
 import os
@@ -79,29 +79,31 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
-# [TPACK - TK] API 키 보안 설정
+# [TPACK - TK] API 키 보안 설정 (Google Gemini)
 # -------------------------------------------------------------------
-# Streamlit secrets 또는 .env 파일에서 API 키 로드
-if "OPENAI_API_KEY" in st.secrets:
-    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-elif os.getenv("OPENAI_API_KEY"):
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Streamlit secrets 또는 .env 파일에서 Gemini API 키 로드
+gemini_api_key: str | None = None
+
+if "GOOGLE_API_KEY" in st.secrets:
+    gemini_api_key = st.secrets["GOOGLE_API_KEY"]
+elif os.getenv("GOOGLE_API_KEY"):
+    gemini_api_key = os.getenv("GOOGLE_API_KEY")
 else:
     # 사이드바에서 API 키 입력 받기
     with st.sidebar:
         st.header("⚙️ 설정")
         api_key_input = st.text_input(
-            "OpenAI API Key",
+            "Google Gemini API Key",
             type="password",
-            help="OpenAI API 키를 입력하세요. .env 파일에 OPENAI_API_KEY로 설정하거나 여기에 직접 입력하세요.",
-            placeholder="API 키를 입력하세요..."
+            help="Google AI Studio에서 발급한 Gemini API 키를 입력하세요. .env 파일에 GOOGLE_API_KEY로 설정하거나 여기에 직접 입력할 수 있습니다.",
+            placeholder="예: AIxxx..."
         )
-    
+
     if api_key_input:
-        client = OpenAI(api_key=api_key_input)
+        gemini_api_key = api_key_input
     else:
-        st.error("🚨 선생님이 칠판을 준비하지 못했어요. (API 키를 설정해주세요)")
-        st.info("💡 .env 파일에 OPENAI_API_KEY를 설정하거나, 사이드바에서 직접 입력하세요.")
+        st.error("🚨 선생님이 칠판을 준비하지 못했어요. (Gemini API 키를 설정해주세요)")
+        st.info("💡 .env 파일에 GOOGLE_API_KEY를 설정하거나, 사이드바에서 직접 입력하세요.")
         st.stop()
 
 # -------------------------------------------------------------------
@@ -176,6 +178,70 @@ system_prompt = f"""
    "지금 선생님 예시처럼, 너도 문제·중점·주의점·가격(선택)·교육적 이점을 차근차근 정리해 볼까요?"라고 말하며 학생이 따라 할 수 있도록 도와줍니다.
 """
 
+
+def call_gemini(messages: list[dict]) -> str:
+    """
+    현재 대화 내용을 바탕으로 Gemini 2.5 Flash에 요청을 보내고,
+    선생님 AI의 응답 텍스트를 반환합니다.
+    """
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/"
+        "models/gemini-2.5-flash:generateContent"
+        f"?key={gemini_api_key}"
+    )
+
+    # Streamlit용 메시지 포맷을 Gemini 포맷으로 변환
+    contents: list[dict] = []
+    for msg in messages:
+        role = msg.get("role")
+        if role == "user":
+            g_role = "user"
+        elif role == "assistant":
+            g_role = "model"
+        else:
+            # system 등은 systemInstruction으로 따로 전달
+            continue
+
+        contents.append(
+            {
+                "role": g_role,
+                "parts": [{"text": msg.get("content", "")}],
+            }
+        )
+
+    payload = {
+        "contents": contents,
+        "systemInstruction": {
+            "parts": [{"text": system_prompt}],
+        },
+    }
+
+    try:
+        resp = requests.post(
+            url,
+            headers={"Content-Type": "application/json"},
+            json=payload,
+            timeout=30,
+        )
+    except requests.exceptions.RequestException as e:
+        raise RuntimeError(f"Gemini API 통신 오류: {e}") from e
+
+    if resp.status_code == 401:
+        raise RuntimeError(
+            "Gemini API 인증 오류입니다. GOOGLE_API_KEY 값을 다시 확인해 주세요."
+        )
+
+    try:
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        raise RuntimeError(f"Gemini API 응답 오류: {e}") from e
+
+    data = resp.json()
+    try:
+        return data["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError) as e:
+        raise RuntimeError(f"Gemini 응답 파싱 중 오류가 발생했습니다: {e}") from e
+
 st.title("👩‍🏫 창업 아이디어 멘토링")
 st.write(f"### 주제: **{category}** 프로젝트")
 st.markdown("---")
@@ -246,15 +312,15 @@ if not st.session_state.idea_selected and len([m for m in st.session_state.messa
                 st.session_state.idea_selected = True
                 st.session_state.messages.append({"role": "user", "content": user_input})
                 
-                # 즉시 AI 응답 생성
+                # 즉시 Gemini 응답 생성
                 with st.spinner("선생님이 아이디어를 검토하고 있습니다..."):
                     time.sleep(1.2)
-                    response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=st.session_state.messages
-                    )
-                    ai_reply = response.choices[0].message.content
-                    st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+                    try:
+                        ai_reply = call_gemini(st.session_state.messages)
+                        st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+                    except RuntimeError as e:
+                        st.error(str(e))
+                        st.stop()
                 st.rerun()
     else:
         if st.button("선택 완료", type="primary", use_container_width=True):
@@ -264,15 +330,15 @@ if not st.session_state.idea_selected and len([m for m in st.session_state.messa
             st.session_state.idea_selected = True
             st.session_state.messages.append({"role": "user", "content": user_input})
             
-            # 즉시 AI 응답 생성
+            # 즉시 Gemini 응답 생성
             with st.spinner("선생님이 아이디어를 검토하고 있습니다..."):
                 time.sleep(1.2)
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=st.session_state.messages
-                )
-                ai_reply = response.choices[0].message.content
-                st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+                try:
+                    ai_reply = call_gemini(st.session_state.messages)
+                    st.session_state.messages.append({"role": "assistant", "content": ai_reply})
+                except RuntimeError as e:
+                    st.error(str(e))
+                    st.stop()
             st.rerun()
 
 # -------------------------------------------------------------------
@@ -287,12 +353,12 @@ if st.session_state.idea_selected:
 
         # 2. AI 생각 효과 (진지한 검토 느낌)
         with st.spinner("선생님이 아이디어를 검토하고 있습니다..."):
-            time.sleep(1.2) 
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=st.session_state.messages
-            )
-            ai_reply = response.choices[0].message.content
+            time.sleep(1.2)
+            try:
+                ai_reply = call_gemini(st.session_state.messages)
+            except RuntimeError as e:
+                st.error(str(e))
+                st.stop()
 
         # 3. AI 답변 표시
         st.chat_message("assistant", avatar="👩‍🏫").markdown(ai_reply)
