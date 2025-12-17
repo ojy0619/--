@@ -104,14 +104,6 @@ st.markdown("""
         color: #000000 !important;
     }
     
-    /* API 키 입력 칸과 탐구 주제 선택 부분만 흰색 */
-    [data-testid="stTextInput"] input,
-    [data-testid="stTextInput"] label,
-    [data-testid="stSelectbox"] label,
-    [data-testid="stSelectbox"] select,
-    [data-testid="stSelectbox"] div {
-        color: #FFFFFF !important;
-    }
     </style>
     """, unsafe_allow_html=True)
 
