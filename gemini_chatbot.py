@@ -104,6 +104,15 @@ st.markdown("""
         color: #000000 !important;
     }
     
+    /* 사이드바의 API key 입력 부분과 탐구주제 선택 부분만 흰색 */
+    section[data-testid="stSidebar"] [data-testid="stTextInput"] input,
+    section[data-testid="stSidebar"] [data-testid="stTextInput"] label,
+    section[data-testid="stSidebar"] [data-testid="stSelectbox"] label,
+    section[data-testid="stSidebar"] [data-testid="stSelectbox"] select,
+    section[data-testid="stSidebar"] [data-testid="stSelectbox"] div {
+        color: #FFFFFF !important;
+    }
+    
     </style>
     """, unsafe_allow_html=True)
 
@@ -363,6 +372,12 @@ st.markdown("---")
 # system 메시지만 있으면 무조건 선택지 화면 표시
 if "messages" in st.session_state:
     if len([m for m in st.session_state.messages if m.get("role") != "system"]) == 0:
+        st.session_state.idea_selected = False
+
+# 선택지 화면 표시 보장 - system 메시지만 있으면 무조건 False
+if "messages" in st.session_state:
+    non_system_count = len([m for m in st.session_state.messages if m.get("role") != "system"])
+    if non_system_count == 0:
         st.session_state.idea_selected = False
 
 if not st.session_state.idea_selected:
