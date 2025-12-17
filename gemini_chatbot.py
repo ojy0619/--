@@ -333,6 +333,12 @@ if st.session_state.idea_selected:
     if len(user_messages) == 0:
         st.session_state.idea_selected = False
 
+# 추가 안전장치: messages에 system만 있으면 idea_selected를 False로
+if "messages" in st.session_state:
+    non_system_messages = [m for m in st.session_state.messages if m.get("role") != "system"]
+    if len(non_system_messages) == 0:
+        st.session_state.idea_selected = False
+
 # 대화 기록 시각화는 선택지가 선택된 후에만
 if st.session_state.idea_selected:
     for message in st.session_state.messages:
