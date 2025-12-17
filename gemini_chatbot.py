@@ -321,6 +321,14 @@ if st.session_state.idea_selected:
     if len(user_messages) == 0:
         st.session_state.idea_selected = False
 
+# 대화 기록 시각화는 선택지가 선택된 후에만
+if st.session_state.idea_selected:
+    for message in st.session_state.messages:
+        if message["role"] != "system":
+            avatar = "👩‍🏫" if message["role"] == "assistant" else "🧒"
+            with st.chat_message(message["role"], avatar=avatar):
+                st.markdown(message["content"])
+
 # -------------------------------------------------------------------
 # [교육적 빌드업] 시작 화면 - 아이디어 선택
 # -------------------------------------------------------------------
@@ -521,14 +529,6 @@ if not st.session_state.idea_selected:
                     st.error(str(e))
                     st.stop()
                 st.rerun()
-else:
-    # 선택지가 선택된 후 - 대화 기록 표시
-    for message in st.session_state.messages:
-        if message["role"] != "system":
-            # 아바타 변경: 고양이 -> 선생님/학생
-            avatar = "👩‍🏫" if message["role"] == "assistant" else "🧒"
-            with st.chat_message(message["role"], avatar=avatar):
-                st.markdown(message["content"])
 
 # -------------------------------------------------------------------
 # [TPACK - TK] 실시간 상호작용
