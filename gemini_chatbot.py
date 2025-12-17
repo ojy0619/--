@@ -75,6 +75,15 @@ st.markdown("""
     .stChatMessage p {
         color: #333333 !important;
     }
+    
+    /* Expander 내부 텍스트 색상 (검정색) */
+    [data-testid="stExpander"] p,
+    [data-testid="stExpander"] h3,
+    [data-testid="stExpander"] h4,
+    [data-testid="stExpander"] li,
+    [data-testid="stExpander"] strong {
+        color: #333333 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -234,25 +243,54 @@ def call_gemini(messages: list[dict], category: str) -> str:
         },
     }
 
-    try:
-        resp = requests.post(
-            url,
-            headers={"Content-Type": "application/json"},
-            json=payload,
-            timeout=30,
-        )
-    except requests.exceptions.RequestException as e:
-        raise RuntimeError(f"Gemini API 통신 오류: {e}") from e
-
-    if resp.status_code == 401:
-        raise RuntimeError(
-            "Gemini API 인증 오류입니다. GOOGLE_API_KEY 값을 다시 확인해 주세요."
-        )
-
-    try:
-        resp.raise_for_status()
-    except requests.exceptions.HTTPError as e:
-        raise RuntimeError(f"Gemini API 응답 오류: {e}") from e
+    # 재시도 로직 (503 오류 대응)
+    max_retries = 3
+    retry_delay = 2
+    
+    for attempt in range(max_retries):
+        try:
+            resp = requests.post(
+                url,
+                headers={"Content-Type": "application/json"},
+                json=payload,
+                timeout=30,
+            )
+            
+            if resp.status_code == 401:
+                raise RuntimeError(
+                    "Gemini API 인증 오류입니다. GOOGLE_API_KEY 값을 다시 확인해 주세요."
+                )
+            
+            if resp.status_code == 503:
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay * (attempt + 1))
+                    continue
+                else:
+                    raise RuntimeError(
+                        "Gemini API 서버가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요. (503 Service Unavailable)"
+                    )
+            
+            resp.raise_for_status()
+            break
+            
+        except requests.exceptions.Timeout:
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay * (attempt + 1))
+                continue
+            else:
+                raise RuntimeError("Gemini API 요청 시간이 초과되었습니다. 네트워크 연결을 확인해주세요.")
+        except requests.exceptions.RequestException as e:
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay * (attempt + 1))
+                continue
+            else:
+                raise RuntimeError(f"Gemini API 통신 오류: {e}")
+        except requests.exceptions.HTTPError as e:
+            if resp.status_code == 503 and attempt < max_retries - 1:
+                time.sleep(retry_delay * (attempt + 1))
+                continue
+            else:
+                raise RuntimeError(f"Gemini API 응답 오류: {e}")
 
     data = resp.json()
     try:
