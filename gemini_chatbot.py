@@ -273,9 +273,15 @@ if "messages" not in st.session_state:
     st.session_state.idea_selected = False
     st.session_state.custom_idea = ""
 
-# idea_selected가 없거나 초기화가 필요한 경우
+# idea_selected가 없거나 초기화가 필요한 경우 - 확실하게 False로 설정
 if "idea_selected" not in st.session_state:
     st.session_state.idea_selected = False
+
+# idea_selected가 True인데 실제로 선택된 메시지가 없으면 다시 False로
+if st.session_state.idea_selected:
+    user_messages = [m for m in st.session_state.messages if m.get("role") == "user"]
+    if len(user_messages) == 0:
+        st.session_state.idea_selected = False
 
 # -------------------------------------------------------------------
 # [교육적 빌드업] 시작 화면 - 아이디어 선택
