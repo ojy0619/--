@@ -544,7 +544,7 @@ if st.session_state.idea_selected:
         with st.spinner("선생님이 아이디어를 검토하고 있습니다..."):
             time.sleep(1.2)
             try:
-                ai_reply = call_gemini(st.session_state.messages)
+                ai_reply = call_gemini(st.session_state.messages, category)
             except RuntimeError as e:
                 st.error(str(e))
                 st.stop()
