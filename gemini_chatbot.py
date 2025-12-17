@@ -310,10 +310,6 @@ def call_gemini(messages: list[dict], category: str) -> str:
     except (KeyError, IndexError) as e:
         raise RuntimeError(f"Gemini 응답 파싱 중 오류가 발생했습니다: {e}") from e
 
-st.title("👩‍🏫 창업 아이디어 멘토링")
-st.write(f"### 주제: **{category}** 프로젝트")
-st.markdown("---")
-
 # -------------------------------------------------------------------
 # 채팅 인터페이스 초기화
 # -------------------------------------------------------------------
@@ -338,6 +334,10 @@ if "messages" in st.session_state:
     non_system_messages = [m for m in st.session_state.messages if m.get("role") != "system"]
     if len(non_system_messages) == 0:
         st.session_state.idea_selected = False
+
+st.title("👩‍🏫 창업 아이디어 멘토링")
+st.write(f"### 주제: **{category}** 프로젝트")
+st.markdown("---")
 
 # -------------------------------------------------------------------
 # [교육적 빌드업] 시작 화면 - 아이디어 선택
