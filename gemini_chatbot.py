@@ -125,13 +125,6 @@ with st.sidebar:
     
     st.divider()
     
-    # 대화 초기화 버튼
-    if st.button("🔄 처음부터 다시 시작하기", use_container_width=True):
-        st.session_state.messages = [{"role": "system", "content": system_prompt}]
-        st.session_state.idea_selected = False
-        st.session_state.custom_idea = ""
-        st.rerun()
-    
     st.divider()
     
     # [과정 중심 평가] 포트폴리오 저장
@@ -156,7 +149,8 @@ with st.sidebar:
 # -------------------------------------------------------------------
 # [TPACK - CK/PK] 페르소나: 카리스마 있는 5년 차 선생님
 # -------------------------------------------------------------------
-system_prompt = f"""
+# 시스템 프롬프트 템플릿 (category 변수를 사용하기 전에 정의)
+system_prompt_template = """
 당신은 친절하지만 카리스마 있는 5년 차 초등학교 선생님입니다.
 현재 수업 주제: {category}
 
@@ -187,11 +181,23 @@ system_prompt = f"""
    "지금 선생님 예시처럼, 너도 문제·중점·주의점·가격(선택)·교육적 이점을 차근차근 정리해 볼까요?"라고 말하며 학생이 따라 할 수 있도록 도와줍니다.
 """
 
+# 시스템 프롬프트 생성 함수
+def get_system_prompt(category: str) -> str:
+    """카테고리에 맞는 시스템 프롬프트를 생성합니다."""
+    return system_prompt_template.format(category=category)
 
-def call_gemini(messages: list[dict]) -> str:
+# 현재 카테고리에 맞는 시스템 프롬프트 생성
+system_prompt = get_system_prompt(category)
+
+
+def call_gemini(messages: list[dict], category: str) -> str:
     """
     현재 대화 내용을 바탕으로 Gemini 2.5 Flash에 요청을 보내고,
     선생님 AI의 응답 텍스트를 반환합니다.
+    
+    Args:
+        messages: 대화 메시지 리스트
+        category: 현재 선택된 카테고리
     """
     url = (
         "https://generativelanguage.googleapis.com/v1beta/"
@@ -218,10 +224,13 @@ def call_gemini(messages: list[dict]) -> str:
             }
         )
 
+    # 현재 카테고리에 맞는 시스템 프롬프트 가져오기
+    current_system_prompt = get_system_prompt(category)
+    
     payload = {
         "contents": contents,
         "systemInstruction": {
-            "parts": [{"text": system_prompt}],
+            "parts": [{"text": current_system_prompt}],
         },
     }
 
@@ -260,7 +269,7 @@ st.markdown("---")
 # -------------------------------------------------------------------
 # 세션 상태 초기화 (처음 실행 시)
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": system_prompt}]
+    st.session_state.messages = [{"role": "system", "content": get_system_prompt(category)}]
     st.session_state.idea_selected = False
     st.session_state.custom_idea = ""
 
@@ -458,7 +467,7 @@ if show_selection:
                 with st.spinner("선생님이 아이디어를 검토하고 있습니다..."):
                     time.sleep(1.2)
                     try:
-                        ai_reply = call_gemini(st.session_state.messages)
+                        ai_reply = call_gemini(st.session_state.messages, category)
                         st.session_state.messages.append({"role": "assistant", "content": ai_reply})
                     except RuntimeError as e:
                         st.error(str(e))
