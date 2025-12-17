@@ -18,38 +18,62 @@ st.set_page_config(
     layout="centered"
 )
 
-# [커스텀 CSS] 집중도를 높이는 깔끔한 디자인
-# 폰트: 가독성 좋은 고딕 계열 / 색감: 차분한 네이비 & 화이트
+# [커스텀 CSS] 아기자기하지만 가독성 좋은 디자인
+# 파스텔 톤 배경 + 진한 글씨 색상으로 대비 확보
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Noto Sans KR', sans-serif;
+        color: #333333;
     }
+    
     .stApp {
-        background-color: #F0F2F6; /* 차분한 회색조 배경 */
+        background: radial-gradient(circle at top left, #FFE5F0 0%, #FFF8E1 35%, #E3F2FD 100%);
     }
-    .chat-bubble {
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+
+    h1, h2, h3, h4, h5, h6, p, span, label {
+        color: #333333 !important;
     }
-    h1 {
-        color: #1A237E; /* 신뢰감 있는 네이비 색상 */
-        text-align: center;
-        font-weight: 700;
+
+    /* 메인 영역 카드 느낌 */
+    .main > div {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 16px;
+        padding: 24px 20px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     }
+
+    /* 버튼: 파스텔 톤 */
     .stButton>button {
-        background-color: #3949AB;
-        color: white;
-        border-radius: 5px;
-        font-weight: bold;
+        background: linear-gradient(135deg, #FFB6C1, #FFCC80);
+        color: #4A148C;
+        border-radius: 999px;
+        font-weight: 700;
+        border: none;
+        padding: 0.4rem 1.2rem;
     }
+    .stButton>button:hover {
+        opacity: 0.95;
+        box-shadow: 0 4px 10px rgba(255, 182, 193, 0.6);
+    }
+
+    /* 정보 박스 */
     .stInfo {
-        background-color: #E8EAF6;
-        color: #1A237E;
+        background-color: #FFF3E0;
+        color: #5D4037;
+        border-radius: 12px;
+    }
+
+    /* 사이드바 배경 */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #FFF3E0 0%, #F3E5F5 100%);
+    }
+
+    /* 채팅 말풍선 느낌 (기본 텍스트 대비 강화용) */
+    .stChatMessage p {
+        color: #333333 !important;
     }
     </style>
     """, unsafe_allow_html=True)
