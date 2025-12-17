@@ -87,6 +87,22 @@ st.markdown("""
     [data-testid="stExpander"] strong {
         color: #000000 !important;
     }
+    
+    /* 모든 텍스트 요소를 검정색으로 강제 설정 */
+    * {
+        color: #000000 !important;
+    }
+    
+    /* 배경색과 테두리는 제외 */
+    [style*="background"],
+    [style*="border"],
+    .stApp,
+    section[data-testid="stSidebar"],
+    .main > div,
+    .stInfo,
+    .stButton>button {
+        color: #000000 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
